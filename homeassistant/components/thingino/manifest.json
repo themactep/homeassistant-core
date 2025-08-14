@@ -1,0 +1,20 @@
+{
+  "domain": "thingino",
+  "name": "Thingino Camera",
+  "codeowners": ["@themactep"],
+  "config_flow": true,
+  "dependencies": ["zeroconf"],
+  "documentation": "https://www.home-assistant.io/integrations/thingino",
+  "homekit": {},
+  "integration_type": "device",
+  "iot_class": "local_push",
+  "loggers": ["onvif", "zeep"],
+  "quality_scale": "bronze",
+  "requirements": ["onvif-zeep-async==4.0.2", "aiomqtt==2.0.0"],
+  "ssdp": [
+    {
+      "st": "urn:schemas-onvif-org:device:VideoEncoder:1"
+    }
+  ],
+  "zeroconf": ["_onvif._tcp.local."]
+}

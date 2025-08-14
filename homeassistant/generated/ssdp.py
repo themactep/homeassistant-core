@@ -335,6 +335,11 @@ SSDP = {
             "manufacturer": "Synology",
         },
     ],
+    "thingino": [
+        {
+            "st": "urn:schemas-onvif-org:device:VideoEncoder:1",
+        },
+    ],
     "unifi": [
         {
             "manufacturer": "Ubiquiti Networks",

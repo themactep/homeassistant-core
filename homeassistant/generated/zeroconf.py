@@ -775,6 +775,11 @@ ZEROCONF = {
             "domain": "octoprint",
         },
     ],
+    "_onvif._tcp.local.": [
+        {
+            "domain": "thingino",
+        },
+    ],
     "_owserver._tcp.local.": [
         {
             "domain": "onewire",

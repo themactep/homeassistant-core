@@ -1,0 +1,86 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "data": {
+          "setup_mode": "Setup Mode"
+        },
+        "data_description": {
+          "setup_mode": "Choose how you want to add your Thingino camera"
+        },
+        "title": "Add Thingino Camera",
+        "description": "Choose how you want to add your Thingino camera."
+      },
+      "manual": {
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]",
+          "mqtt_host": "MQTT Broker Host",
+          "mqtt_username": "MQTT Username",
+          "mqtt_password": "MQTT Password"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the Thingino camera",
+          "username": "Username for ONVIF authentication",
+          "password": "Password for ONVIF authentication",
+          "mqtt_host": "MQTT broker hostname or IP address",
+          "mqtt_username": "Username for MQTT authentication",
+          "mqtt_password": "Password for MQTT authentication"
+        },
+        "description": "Enter the details for your Thingino camera."
+      },
+      "discover": {
+        "data": {
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]",
+          "network": "Network to scan"
+        },
+        "data_description": {
+          "username": "Username for ONVIF authentication",
+          "password": "Password for ONVIF authentication",
+          "network": "Network range to scan (e.g., 192.168.1.0/24)"
+        },
+        "title": "Discover Thingino Cameras",
+        "description": "Enter credentials and network range to discover Thingino cameras using HTTP-based ONVIF requests."
+      },
+      "select_cameras": {
+        "title": "Select Thingino Cameras",
+        "description": "Found {count} Thingino camera(s) on your network. Select the cameras you want to add (you can select multiple):"
+      },
+      "zeroconf_confirm": {
+        "data": {
+          "host": "[%key:common::config_flow::data::host%]",
+          "username": "[%key:common::config_flow::data::username%]",
+          "password": "[%key:common::config_flow::data::password%]",
+          "mqtt_host": "MQTT Broker Host",
+          "mqtt_username": "MQTT Username",
+          "mqtt_password": "MQTT Password"
+        },
+        "data_description": {
+          "host": "IP address or hostname of the Thingino camera",
+          "username": "Username for ONVIF authentication",
+          "password": "Password for ONVIF authentication",
+          "mqtt_host": "MQTT broker hostname or IP address",
+          "mqtt_username": "Username for MQTT authentication",
+          "mqtt_password": "Password for MQTT authentication"
+        },
+        "description": "Confirm the settings for the discovered Thingino camera at {host}."
+      }
+    },
+    "error": {
+      "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
+      "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
+      "unknown": "[%key:common::config_flow::error::unknown%]",
+      "no_cameras_selected": "Please select at least one camera to add."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "not_thingino_device": "Discovered device is not a Thingino camera.",
+      "no_cameras_found": "No Thingino cameras found on the network. Please check that your cameras are powered on and connected to the same network.",
+      "all_cameras_already_configured": "All selected cameras are already configured in Home Assistant.",
+      "invalid_discovery_info": "Invalid discovery information provided.",
+      "cameras_added": "Successfully added {count} Thingino camera(s) to Home Assistant.\n\n[View all Thingino cameras](/config/integrations/integration/thingino)"
+    }
+  }
+}

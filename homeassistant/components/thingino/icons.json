@@ -1,0 +1,77 @@
+{
+  "entity": {
+    "camera": {
+      "thingino": {
+        "default": "mdi:cctv",
+        "state": {
+          "off": "mdi:cctv-off"
+        }
+      }
+    },
+    "binary_sensor": {
+      "motion": {
+        "default": "mdi:motion-sensor",
+        "state": {
+          "off": "mdi:motion-sensor-off"
+        }
+      },
+      "sound": {
+        "default": "mdi:microphone",
+        "state": {
+          "off": "mdi:microphone-off"
+        }
+      },
+      "recording": {
+        "default": "mdi:record-rec",
+        "state": {
+          "off": "mdi:record"
+        }
+      }
+    },
+    "sensor": {
+      "uptime": {
+        "default": "mdi:clock-outline"
+      },
+      "temperature": {
+        "default": "mdi:thermometer"
+      },
+      "wifi_signal": {
+        "default": "mdi:wifi"
+      },
+      "storage": {
+        "default": "mdi:sd"
+      }
+    },
+    "switch": {
+      "ir_led": {
+        "default": "mdi:led-on",
+        "state": {
+          "off": "mdi:led-off"
+        }
+      },
+      "night_vision": {
+        "default": "mdi:weather-night",
+        "state": {
+          "off": "mdi:weather-sunny"
+        }
+      },
+      "motion_detection": {
+        "default": "mdi:motion-sensor",
+        "state": {
+          "off": "mdi:motion-sensor-off"
+        }
+      }
+    }
+  },
+  "services": {
+    "snapshot": {
+      "service": "mdi:camera"
+    },
+    "reboot": {
+      "service": "mdi:restart"
+    },
+    "update_firmware": {
+      "service": "mdi:update"
+    }
+  }
+}
