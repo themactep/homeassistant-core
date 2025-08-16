@@ -64,6 +64,21 @@
     }
   },
   "services": {
+    "capture_snapshot": {
+      "service": "mdi:camera"
+    },
+    "ptz_move": {
+      "service": "mdi:pan-horizontal"
+    },
+    "ptz_stop": {
+      "service": "mdi:stop"
+    },
+    "ptz_preset_goto": {
+      "service": "mdi:target"
+    },
+    "ptz_preset_set": {
+      "service": "mdi:content-save"
+    },
     "snapshot": {
       "service": "mdi:camera"
     },

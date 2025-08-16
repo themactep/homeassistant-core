@@ -249,6 +249,9 @@ aioemonitor==1.0.5
 # homeassistant.components.esphome
 aioesphomeapi==39.0.0
 
+# homeassistant.components.thingino
+aiofiles==24.1.0
+
 # homeassistant.components.flo
 aioflo==2021.11.0
 
@@ -314,9 +317,6 @@ aiomealie==0.10.1
 
 # homeassistant.components.modern_forms
 aiomodernforms==0.1.8
-
-# homeassistant.components.thingino
-aiomqtt==2.0.0
 
 # homeassistant.components.yamaha_musiccast
 aiomusiccast==0.14.8

@@ -3,84 +3,91 @@
     "step": {
       "user": {
         "data": {
-          "setup_mode": "Setup Mode"
-        },
-        "data_description": {
-          "setup_mode": "Choose how you want to add your Thingino camera"
-        },
-        "title": "Add Thingino Camera",
-        "description": "Choose how you want to add your Thingino camera."
-      },
-      "manual": {
-        "data": {
-          "host": "[%key:common::config_flow::data::host%]",
+          "address": "IP Address or Network Range",
           "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]",
-          "mqtt_host": "MQTT Broker Host",
-          "mqtt_username": "MQTT Username",
-          "mqtt_password": "MQTT Password"
+          "password": "[%key:common::config_flow::data::password%]"
         },
         "data_description": {
-          "host": "IP address or hostname of the Thingino camera",
+          "address": "Enter a single IP address (e.g., 192.168.1.100) to add one camera, or a network range (e.g., 192.168.1.0/24) to discover multiple cameras",
           "username": "Username for ONVIF authentication",
-          "password": "Password for ONVIF authentication",
-          "mqtt_host": "MQTT broker hostname or IP address",
-          "mqtt_username": "Username for MQTT authentication",
-          "mqtt_password": "Password for MQTT authentication"
+          "password": "Password for ONVIF authentication"
         },
-        "description": "Enter the details for your Thingino camera."
-      },
-      "discover": {
-        "data": {
-          "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]",
-          "network": "Network to scan"
-        },
-        "data_description": {
-          "username": "Username for ONVIF authentication",
-          "password": "Password for ONVIF authentication",
-          "network": "Network range to scan (e.g., 192.168.1.0/24)"
-        },
-        "title": "Discover Thingino Cameras",
-        "description": "Enter credentials and network range to discover Thingino cameras using HTTP-based ONVIF requests."
+        "title": "Add Thingino Camera(s)",
+        "description": "Enter an IP address to add a single camera, or a network range to discover multiple cameras."
       },
       "select_cameras": {
         "title": "Select Thingino Cameras",
         "description": "Found {count} Thingino camera(s) on your network. Select the cameras you want to add (you can select multiple):"
-      },
-      "zeroconf_confirm": {
-        "data": {
-          "host": "[%key:common::config_flow::data::host%]",
-          "username": "[%key:common::config_flow::data::username%]",
-          "password": "[%key:common::config_flow::data::password%]",
-          "mqtt_host": "MQTT Broker Host",
-          "mqtt_username": "MQTT Username",
-          "mqtt_password": "MQTT Password"
-        },
-        "data_description": {
-          "host": "IP address or hostname of the Thingino camera",
-          "username": "Username for ONVIF authentication",
-          "password": "Password for ONVIF authentication",
-          "mqtt_host": "MQTT broker hostname or IP address",
-          "mqtt_username": "Username for MQTT authentication",
-          "mqtt_password": "Password for MQTT authentication"
-        },
-        "description": "Confirm the settings for the discovered Thingino camera at {host}."
       }
     },
     "error": {
       "cannot_connect": "[%key:common::config_flow::error::cannot_connect%]",
       "invalid_auth": "[%key:common::config_flow::error::invalid_auth%]",
       "unknown": "[%key:common::config_flow::error::unknown%]",
+      "invalid_address": "Invalid IP address or network range. Please enter a valid IP address (e.g., 192.168.1.100) or network range (e.g., 192.168.1.0/24).",
       "no_cameras_selected": "Please select at least one camera to add."
     },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
-      "not_thingino_device": "Discovered device is not a Thingino camera.",
+
       "no_cameras_found": "No Thingino cameras found on the network. Please check that your cameras are powered on and connected to the same network.",
       "all_cameras_already_configured": "All selected cameras are already configured in Home Assistant.",
       "invalid_discovery_info": "Invalid discovery information provided.",
       "cameras_added": "Successfully added {count} Thingino camera(s) to Home Assistant.\n\n[View all Thingino cameras](/config/integrations/integration/thingino)"
+    }
+  },
+  "services": {
+    "capture_snapshot": {
+      "name": "Capture snapshot",
+      "description": "Capture a snapshot from the camera and save it to a file.",
+      "fields": {
+        "filename": {
+          "name": "Filename",
+          "description": "Path and filename where the snapshot will be saved."
+        }
+      }
+    },
+    "ptz_move": {
+      "name": "PTZ move",
+      "description": "Move the camera in the specified direction.",
+      "fields": {
+        "direction": {
+          "name": "Direction",
+          "description": "Direction to move the camera."
+        },
+        "speed": {
+          "name": "Speed",
+          "description": "Speed of the movement (0.1 to 1.0)."
+        },
+        "duration": {
+          "name": "Duration",
+          "description": "Duration of the movement in seconds."
+        }
+      }
+    },
+    "ptz_stop": {
+      "name": "PTZ stop",
+      "description": "Stop any ongoing PTZ movement."
+    },
+    "ptz_preset_goto": {
+      "name": "PTZ go to preset",
+      "description": "Move the camera to a saved preset position.",
+      "fields": {
+        "preset": {
+          "name": "Preset",
+          "description": "Preset number to go to (1-8)."
+        }
+      }
+    },
+    "ptz_preset_set": {
+      "name": "PTZ set preset",
+      "description": "Save the current camera position as a preset.",
+      "fields": {
+        "preset": {
+          "name": "Preset",
+          "description": "Preset number to save (1-8)."
+        }
+      }
     }
   }
 }

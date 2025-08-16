@@ -1,215 +1,292 @@
 """Test the Thingino binary sensor platform."""
 
-import asyncio
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass
 from homeassistant.components.thingino.const import DOMAIN
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 
+from tests.common import MockConfigEntry
 
-async def test_binary_sensor_setup_with_mqtt(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
+
+async def test_binary_sensor_setup_with_onvif_events_supported(
+    hass: HomeAssistant,
 ) -> None:
-    """Test binary sensor setup with MQTT configuration."""
-    mock_config_entry.add_to_hass(hass)
+    """Test binary sensor setup when ONVIF events are supported."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            "host": "192.168.1.100",
+            "username": "thingino",
+            "password": "",
+            "port": 554,
+            "serial": "aabbccddeeff",
+            "camera_name": "Thingino Camera",
+            "manufacturer": "Thingino",
+            "model": "Camera",
+            "firmware": "1.2.3",
+        },
+        unique_id="thingino_aabbccddeeff",
+    )
+    # Set runtime_data directly for testing
+    config_entry.runtime_data = {
+        "host": "192.168.1.100",
+        "username": "thingino",
+        "password": "",
+        "serial": "aabbccddeeff",
+        "camera_name": "Thingino Camera",
+        "manufacturer": "Thingino",
+        "model": "Camera",
+        "firmware": "1.2.3",
+        "hardware_id": "T31X_GC4653",
+        "firmware_version": "1.2.3",
+    }
+    config_entry.add_to_hass(hass)
 
-    with patch("homeassistant.components.thingino.binary_sensor.aiomqtt"):
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+    # Mock ONVIF capabilities response that includes Events service
+    mock_capabilities_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+    <soap:Body>
+        <tds:GetCapabilitiesResponse xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
+            <tds:Capabilities>
+                <tt:Events xmlns:tt="http://www.onvif.org/ver10/schema">
+                    <tt:XAddr>http://192.168.1.100:80/onvif/events_service</tt:XAddr>
+                </tt:Events>
+            </tds:Capabilities>
+        </tds:GetCapabilitiesResponse>
+    </soap:Body>
+</soap:Envelope>"""
+
+    # Mock the main integration setup to avoid ONVIF library calls
+    mock_device_info = type(
+        "MockDeviceInfo",
+        (),
+        {
+            "Manufacturer": "Thingino",
+            "Model": "Camera",
+            "FirmwareVersion": "1.2.3",
+            "HardwareId": "T31X_GC4653",
+            "SerialNumber": "aabbccddeeff",
+        },
+    )()
+
+    with (
+        patch("homeassistant.components.thingino.ONVIFCamera") as mock_onvif_camera,
+        patch(
+            "homeassistant.components.thingino.onvif_client.ThinginoOnvifClient.make_request",
+            return_value=mock_capabilities_xml,
+        ),
+        patch(
+            "homeassistant.components.thingino.onvif_client.ThinginoOnvifClient.parse_capabilities",
+            return_value={"Events": "http://192.168.1.100:80/onvif/events_service"},
+        ),
+    ):
+        # Mock the ONVIF camera and device service
+        mock_camera_instance = mock_onvif_camera.return_value
+        mock_camera_instance.create_devicemgmt_service = AsyncMock()
+        mock_device_service = (
+            mock_camera_instance.create_devicemgmt_service.return_value
+        )
+        mock_device_service.GetDeviceInformation = AsyncMock(
+            return_value=mock_device_info
+        )
+        mock_camera_instance.close = AsyncMock()
+
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
 
     # Check that binary sensor entity is created
     entity_registry = er.async_get(hass)
-    sensor_entity = entity_registry.async_get(
-        "binary_sensor.thingino_motion_192_168_1_100"
-    )
+    sensor_entity = entity_registry.async_get("binary_sensor.thingino_camera_motion")
 
     assert sensor_entity is not None
     assert sensor_entity.domain == "binary_sensor"
     assert sensor_entity.platform == DOMAIN
 
 
-async def test_binary_sensor_no_setup_without_mqtt(
-    hass: HomeAssistant, mock_config_entry_no_mqtt, mock_onvif_camera
-) -> None:
-    """Test binary sensor is not created without MQTT configuration."""
-    mock_config_entry_no_mqtt.add_to_hass(hass)
-
-    assert await hass.config_entries.async_setup(mock_config_entry_no_mqtt.entry_id)
-    await hass.async_block_till_done()
-
-    # Check that no binary sensor entity is created
-    entity_registry = er.async_get(hass)
-    sensor_entity = entity_registry.async_get(
-        "binary_sensor.thingino_motion_192_168_1_100"
+async def test_binary_sensor_setup_without_onvif_events(hass: HomeAssistant) -> None:
+    """Test binary sensor setup when ONVIF events are not supported."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            "host": "192.168.1.100",
+            "username": "thingino",
+            "password": "",
+            "port": 554,
+            "serial": "aabbccddeeff",
+            "camera_name": "Thingino Camera",
+            "manufacturer": "Thingino",
+            "model": "Camera",
+            "firmware": "1.2.3",
+        },
+        unique_id="thingino_aabbccddeeff",
     )
+    # Set runtime_data directly for testing
+    config_entry.runtime_data = {
+        "host": "192.168.1.100",
+        "username": "thingino",
+        "password": "",
+        "serial": "aabbccddeeff",
+        "camera_name": "Thingino Camera",
+        "manufacturer": "Thingino",
+        "model": "Camera",
+        "firmware": "1.2.3",
+        "hardware_id": "T31X_GC4653",
+        "firmware_version": "1.2.3",
+    }
+    config_entry.add_to_hass(hass)
 
-    assert sensor_entity is None
+    # Mock ONVIF capabilities response that does NOT include Events service
+    mock_capabilities_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+    <soap:Body>
+        <tds:GetCapabilitiesResponse xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
+            <tds:Capabilities>
+                <tt:Media xmlns:tt="http://www.onvif.org/ver10/schema">
+                    <tt:XAddr>http://192.168.1.100:80/onvif/media_service</tt:XAddr>
+                </tt:Media>
+            </tds:Capabilities>
+        </tds:GetCapabilitiesResponse>
+    </soap:Body>
+</soap:Envelope>"""
 
+    # Mock the main integration setup to avoid ONVIF library calls
+    mock_device_info = type(
+        "MockDeviceInfo",
+        (),
+        {
+            "Manufacturer": "Thingino",
+            "Model": "Camera",
+            "FirmwareVersion": "1.2.3",
+            "HardwareId": "T31X_GC4653",
+            "SerialNumber": "aabbccddeeff",
+        },
+    )()
 
-async def test_binary_sensor_device_class(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
-) -> None:
-    """Test binary sensor device class."""
-    mock_config_entry.add_to_hass(hass)
+    with (
+        patch("homeassistant.components.thingino.ONVIFCamera") as mock_onvif_camera,
+        patch(
+            "homeassistant.components.thingino.onvif_client.ThinginoOnvifClient.make_request",
+            return_value=mock_capabilities_xml,
+        ),
+        patch(
+            "homeassistant.components.thingino.onvif_client.ThinginoOnvifClient.parse_capabilities",
+            return_value={},  # No Events service
+        ),
+    ):
+        # Mock the ONVIF camera and device service
+        mock_camera_instance = mock_onvif_camera.return_value
+        mock_camera_instance.create_devicemgmt_service = AsyncMock()
+        mock_device_service = (
+            mock_camera_instance.create_devicemgmt_service.return_value
+        )
+        mock_device_service.GetDeviceInformation = AsyncMock(
+            return_value=mock_device_info
+        )
+        mock_camera_instance.close = AsyncMock()
 
-    with patch("homeassistant.components.thingino.binary_sensor.aiomqtt"):
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
         await hass.async_block_till_done()
 
-    state = hass.states.get("binary_sensor.thingino_motion_192_168_1_100")
+    # Check that binary sensor entity is created but unavailable
+    entity_registry = er.async_get(hass)
+    sensor_entity = entity_registry.async_get("binary_sensor.thingino_camera_motion")
+
+    assert sensor_entity is not None
+    assert sensor_entity.domain == "binary_sensor"
+    assert sensor_entity.platform == DOMAIN
+
+    # Check that the entity is unavailable since events are not supported
+    state = hass.states.get("binary_sensor.thingino_camera_motion")
+    assert state is not None
+    assert state.state == "unavailable"
+
+
+async def test_binary_sensor_device_class(hass: HomeAssistant) -> None:
+    """Test binary sensor device class."""
+    config_entry = MockConfigEntry(
+        domain=DOMAIN,
+        data={
+            "host": "192.168.1.100",
+            "username": "thingino",
+            "password": "",
+            "port": 554,
+            "serial": "aabbccddeeff",
+            "camera_name": "Thingino Camera",
+            "manufacturer": "Thingino",
+            "model": "Camera",
+            "firmware": "1.2.3",
+        },
+        unique_id="thingino_aabbccddeeff",
+    )
+    # Set runtime_data directly for testing
+    config_entry.runtime_data = {
+        "host": "192.168.1.100",
+        "username": "thingino",
+        "password": "",
+        "serial": "aabbccddeeff",
+        "camera_name": "Thingino Camera",
+        "manufacturer": "Thingino",
+        "model": "Camera",
+        "firmware": "1.2.3",
+        "hardware_id": "T31X_GC4653",
+        "firmware_version": "1.2.3",
+    }
+    config_entry.add_to_hass(hass)
+
+    # Mock ONVIF capabilities response that includes Events service
+    mock_capabilities_xml = """<?xml version="1.0" encoding="UTF-8"?>
+<soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope">
+    <soap:Body>
+        <tds:GetCapabilitiesResponse xmlns:tds="http://www.onvif.org/ver10/device/wsdl">
+            <tds:Capabilities>
+                <tt:Events xmlns:tt="http://www.onvif.org/ver10/schema">
+                    <tt:XAddr>http://192.168.1.100:80/onvif/events_service</tt:XAddr>
+                </tt:Events>
+            </tds:Capabilities>
+        </tds:GetCapabilitiesResponse>
+    </soap:Body>
+</soap:Envelope>"""
+
+    # Mock the main integration setup to avoid ONVIF library calls
+    mock_device_info = type(
+        "MockDeviceInfo",
+        (),
+        {
+            "Manufacturer": "Thingino",
+            "Model": "Camera",
+            "FirmwareVersion": "1.2.3",
+            "HardwareId": "T31X_GC4653",
+            "SerialNumber": "aabbccddeeff",
+        },
+    )()
+
+    with (
+        patch("homeassistant.components.thingino.ONVIFCamera") as mock_onvif_camera,
+        patch(
+            "homeassistant.components.thingino.onvif_client.ThinginoOnvifClient.make_request",
+            return_value=mock_capabilities_xml,
+        ),
+        patch(
+            "homeassistant.components.thingino.onvif_client.ThinginoOnvifClient.parse_capabilities",
+            return_value={"Events": "http://192.168.1.100:80/onvif/events_service"},
+        ),
+    ):
+        # Mock the ONVIF camera and device service
+        mock_camera_instance = mock_onvif_camera.return_value
+        mock_camera_instance.create_devicemgmt_service = AsyncMock()
+        mock_device_service = (
+            mock_camera_instance.create_devicemgmt_service.return_value
+        )
+        mock_device_service.GetDeviceInformation = AsyncMock(
+            return_value=mock_device_info
+        )
+        mock_camera_instance.close = AsyncMock()
+
+        assert await hass.config_entries.async_setup(config_entry.entry_id)
+        await hass.async_block_till_done()
+
+    state = hass.states.get("binary_sensor.thingino_camera_motion")
     assert state is not None
     assert state.attributes.get("device_class") == BinarySensorDeviceClass.MOTION
-
-
-async def test_binary_sensor_mqtt_connection_success(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
-) -> None:
-    """Test successful MQTT connection."""
-    mock_config_entry.add_to_hass(hass)
-
-    # Mock aiomqtt
-    mock_client = AsyncMock()
-    mock_client.__aenter__.return_value = mock_client
-    mock_client.__aexit__.return_value = None
-    mock_client.messages = AsyncMock()
-    mock_client.messages.__aiter__.return_value = iter([])
-
-    with patch(
-        "homeassistant.components.thingino.binary_sensor.aiomqtt"
-    ) as mock_aiomqtt:
-        mock_aiomqtt.Client.return_value = mock_client
-
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
-
-        # Give some time for the MQTT task to start
-        await asyncio.sleep(0.1)
-
-        # Check that MQTT client was created with correct parameters
-        mock_aiomqtt.Client.assert_called_with(
-            hostname="192.168.1.1",
-            port=1883,
-            keepalive=60,
-            username="mqtt_user",
-            password="mqtt_pass",
-        )
-
-
-async def test_binary_sensor_mqtt_message_handling(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
-) -> None:
-    """Test MQTT message handling."""
-    mock_config_entry.add_to_hass(hass)
-
-    # Mock MQTT message
-    mock_message = MagicMock()
-    mock_message.payload.decode.return_value = "start"
-
-    # Mock aiomqtt
-    mock_client = AsyncMock()
-    mock_client.__aenter__.return_value = mock_client
-    mock_client.__aexit__.return_value = None
-    mock_client.messages = AsyncMock()
-    mock_client.messages.__aiter__.return_value = iter([mock_message])
-
-    with patch(
-        "homeassistant.components.thingino.binary_sensor.aiomqtt"
-    ) as mock_aiomqtt:
-        mock_aiomqtt.Client.return_value = mock_client
-
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
-
-        # Give some time for the MQTT task to process the message
-        await asyncio.sleep(0.1)
-
-        # Check that the binary sensor state is updated
-        state = hass.states.get("binary_sensor.thingino_motion_192_168_1_100")
-        # Note: The state might not be updated immediately due to async nature
-
-
-async def test_binary_sensor_mqtt_connection_failure(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
-) -> None:
-    """Test MQTT connection failure handling."""
-    mock_config_entry.add_to_hass(hass)
-
-    with patch(
-        "homeassistant.components.thingino.binary_sensor.aiomqtt"
-    ) as mock_aiomqtt:
-        mock_aiomqtt.Client.side_effect = Exception("Connection failed")
-
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
-
-        # Give some time for the MQTT task to handle the error
-        await asyncio.sleep(0.1)
-
-        # The entity should still be created but unavailable
-        state = hass.states.get("binary_sensor.thingino_motion_192_168_1_100")
-        assert state is not None
-
-
-async def test_binary_sensor_device_info(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
-) -> None:
-    """Test binary sensor device info."""
-    mock_config_entry.add_to_hass(hass)
-
-    with patch("homeassistant.components.thingino.binary_sensor.aiomqtt"):
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
-
-    # Get the binary sensor entity
-    binary_sensor_entity = None
-    for entity in hass.data[DOMAIN][mock_config_entry.entry_id]["binary_sensor"]:
-        binary_sensor_entity = entity
-        break
-
-    assert binary_sensor_entity is not None
-
-    device_info = binary_sensor_entity.device_info
-    assert device_info is not None
-    assert device_info["identifiers"] == {(DOMAIN, "192.168.1.100")}
-    assert device_info["name"] == "Thingino Camera 192.168.1.100"
-    assert device_info["manufacturer"] == "Thingino"
-    assert device_info["model"] == "Camera"
-    assert device_info["configuration_url"] == "http://192.168.1.100"
-
-
-async def test_binary_sensor_extra_state_attributes(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
-) -> None:
-    """Test binary sensor extra state attributes."""
-    mock_config_entry.add_to_hass(hass)
-
-    with patch("homeassistant.components.thingino.binary_sensor.aiomqtt"):
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
-
-    state = hass.states.get("binary_sensor.thingino_motion_192_168_1_100")
-    assert state is not None
-
-    attributes = state.attributes
-    assert attributes.get("mqtt_topic") == "thingino/192.168.1.100/motion"
-    assert attributes.get("mqtt_host") == "192.168.1.1"
-
-
-async def test_binary_sensor_aiomqtt_import_error(
-    hass: HomeAssistant, mock_config_entry, mock_onvif_camera
-) -> None:
-    """Test handling of aiomqtt import error."""
-    mock_config_entry.add_to_hass(hass)
-
-    with patch(
-        "homeassistant.components.thingino.binary_sensor.aiomqtt",
-        side_effect=ImportError,
-    ):
-        assert await hass.config_entries.async_setup(mock_config_entry.entry_id)
-        await hass.async_block_till_done()
-
-        # The entity should still be created
-        state = hass.states.get("binary_sensor.thingino_motion_192_168_1_100")
-        assert state is not None

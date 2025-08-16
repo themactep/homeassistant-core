@@ -1,0 +1,83 @@
+capture_snapshot:
+  target:
+    entity:
+      domain: camera
+      integration: thingino
+  fields:
+    filename:
+      required: true
+      example: "snapshots/camera_snapshot.jpg"
+      selector:
+        text:
+
+ptz_move:
+  target:
+    entity:
+      domain: camera
+      integration: thingino
+  fields:
+    direction:
+      required: true
+      selector:
+        select:
+          options:
+            - "up"
+            - "down"
+            - "left"
+            - "right"
+            - "up_left"
+            - "up_right"
+            - "down_left"
+            - "down_right"
+    speed:
+      required: false
+      default: 0.5
+      selector:
+        number:
+          min: 0.1
+          max: 1.0
+          step: 0.1
+          mode: slider
+    duration:
+      required: false
+      default: 1.0
+      selector:
+        number:
+          min: 0.1
+          max: 10.0
+          step: 0.1
+          mode: slider
+
+ptz_stop:
+  target:
+    entity:
+      domain: camera
+      integration: thingino
+
+ptz_preset_goto:
+  target:
+    entity:
+      domain: camera
+      integration: thingino
+  fields:
+    preset:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 8
+          mode: box
+
+ptz_preset_set:
+  target:
+    entity:
+      domain: camera
+      integration: thingino
+  fields:
+    preset:
+      required: true
+      selector:
+        number:
+          min: 1
+          max: 8
+          mode: box

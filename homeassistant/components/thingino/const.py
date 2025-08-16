@@ -1,5 +1,6 @@
 """Constants for the Thingino integration."""
 
+from dataclasses import dataclass
 import os
 import sys
 
@@ -10,16 +11,25 @@ from homeassistant.const import Platform
 DOMAIN = "thingino"
 
 # Configuration keys
-CONF_MQTT_HOST = "mqtt_host"
-CONF_MQTT_USERNAME = "mqtt_username"
-CONF_MQTT_PASSWORD = "mqtt_password"
 
 # Default values
 DEFAULT_USERNAME = "thingino"
 DEFAULT_PASSWORD = "thingino"
+DEFAULT_NETWORK = "192.168.1.0/24"
 
-# MQTT topic (adjust if your Thingino setup uses a different topic structure)
-MQTT_TOPIC_MOTION = "thingino/{}/motion"
+# ONVIF XML namespaces (support both SOAP-ENV and soap prefixes)
+ONVIF_NAMESPACES = {
+    "soap": "http://www.w3.org/2003/05/soap-envelope",
+    "SOAP-ENV": "http://www.w3.org/2003/05/soap-envelope",
+    "tds": "http://www.onvif.org/ver10/device/wsdl",
+    "trt": "http://www.onvif.org/ver10/media/wsdl",
+    "tt": "http://www.onvif.org/ver10/schema",
+}
+
+
+def normalize_mac_address(mac: str) -> str:
+    """Normalize MAC address by removing colons and converting to lowercase."""
+    return mac.replace(":", "").lower()
 
 
 def get_wsdl_dir() -> str:
@@ -36,3 +46,38 @@ def get_wsdl_dir() -> str:
 
 # Platforms
 PLATFORMS = [Platform.BINARY_SENSOR, Platform.CAMERA]
+
+
+@dataclass
+class ThinginoDeviceInfo:
+    """Thingino camera device information from ONVIF."""
+
+    host: str
+    mac_address: str  # Always the MAC address (from ONVIF SerialNumber)
+    manufacturer: str
+    model: str
+    firmware_version: str
+    hardware_id: str
+    camera_name: str
+
+    @property
+    def normalized_mac(self) -> str:
+        """MAC address normalized for use in entity IDs (lowercase, no colons)."""
+        return self.mac_address.replace(":", "").lower()
+
+    @property
+    def device_identifier(self) -> str:
+        """Unique device identifier for Home Assistant device registry."""
+        return self.mac_address if self.mac_address != "unknown" else self.host
+
+    @property
+    def entity_id_base(self) -> str:
+        """Base string for entity IDs (thingino_<normalized_mac>)."""
+        return f"thingino_{self.normalized_mac}"
+
+    @property
+    def device_title(self) -> str:
+        """Human-readable device title."""
+        if self.mac_address != "unknown":
+            return f"Thingino {self.mac_address}"
+        return f"Thingino Camera ({self.host})"
